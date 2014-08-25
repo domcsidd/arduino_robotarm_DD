@@ -151,7 +151,7 @@ if (Serial.available()==1 && Serial.read()=='o')
   servoControll(5,base_pos_5);
   servoControll(6,base_pos_6);
 }
-if ( Serial.read()=='d')
+if ( Serial.available()==1 &&S erial.read()=='d')
 {
 	Serial.println("The servos are dettaching...");
   main1.detach();
