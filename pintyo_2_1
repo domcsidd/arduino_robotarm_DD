@@ -1,0 +1,190 @@
+// Dezső Dominik ,Nagykanizsa ,Project started at 2014.07.21_18.00
+// This  code is written by Dominik Dezső 
+
+
+#include <Servo.h> 
+
+
+class Speed
+{
+public :
+	Speed(int speed){motor_speed=speed;};
+	void setSpeed (int speed){motor_speed=speed;};
+	int getSpeed(){return motor_speed;};
+private:
+	int motor_speed;
+};
+class servoRange
+{
+public:
+	servoRange(int min,int max){servo_min=min;servo_max=max; out_of_range=false;};
+	void setRange(int min,int max){servo_min=min;servo_max=max;out_of_range=false;};
+	void setRangeMin(int min){servo_min=min;out_of_range=false;};
+	void setRangeMax(int max){servo_max=max;out_of_range=false;};
+	int getRangeError(int anggle){getRangeMessage(anggle);return out_of_range;};
+	void getRangeMessage(int angle){if((angle<servo_min || angle>servo_max )&& out_of_range!=true) {Serial.println("Wrong ANGLE  it is out of range!-try out an other angle or specify an other.");out_of_range=true;};}
+	int getRangeMin(){return servo_min;};
+	int getRangeMax(){return servo_max;};
+private:
+	int servo_min;
+	int servo_max;
+	bool out_of_range;
+};
+Servo main1;	/*pin3 bottom*/	Speed main1s(15);	servoRange main1r(0,180);
+Servo main2;	/*pin5 levelright*/	Speed main2_3s(15);	servoRange main2_3r(20,160);
+Servo main3;	/*pin6 levelleft*/	//Speed main3s(15);	//servoRange main3r(20,160);
+Servo main4;	/*pin9*/	Speed main4s(25);	servoRange main4r(0,180);
+Servo main5;	/*pin10*/	Speed main5s(15);	servoRange main5r(0,180);
+Servo main6;	/*pin11*/	Speed main6s(15);	servoRange main6r(0,180);
+
+volatile int pos=90;
+int prev_pos_1 =0 ;
+int prev_pos_2 =0 ;
+int prev_pos_3 =0;
+int prev_pos_4 =0;
+int prev_pos_5 =0;
+int prev_pos_6 =0;
+
+int base_pos_1=prev_pos_1;
+int base_pos_2=prev_pos_2;
+int base_pos_3=prev_pos_3;
+int base_pos_4=prev_pos_4;
+int base_pos_5=prev_pos_5;
+int base_pos_6=prev_pos_6;
+
+int motor =1;
+void servoControll(int servo,int angle);
+void servoMover(Servo servo,Speed MySpeed,int pos,int &prev_pos);
+
+
+void servoControll(int servo,int angle)
+{
+	switch(servo)
+	{
+	case 1:{servoMover(main1,main1s,angle,prev_pos_1);break; }
+	//case 2:{servoMover(main2,main2s,angle,prev_pos_2);break; }
+	//case 3:{servoMover(main3,main3s,angle,prev_pos_3);break; }
+	case 4:{servoMover(main4,main4s,angle,prev_pos_4);break; }
+	case 5:{servoMover(main5,main5s,angle,prev_pos_5);break; }
+	case 6:{servoMover(main6,main6s,angle,prev_pos_6);break; }
+	};
+};
+
+void servoMover(Servo servo,Speed MySpeed,int pos,int &prev_pos) 
+{
+	if(pos>prev_pos)
+	{
+          for(int c_pos = prev_pos; c_pos < pos; c_pos += 1) 
+  		{                                
+  		servo.write(c_pos);             
+  		delay(MySpeed.getSpeed());                       
+  		} 
+	 }
+       else 
+       {
+         for(int c_pos = prev_pos; c_pos > pos; c_pos -= 1)  
+		{                                  
+		servo.write(c_pos);              
+		delay(MySpeed.getSpeed());                      
+		} 
+ }
+prev_pos=pos;
+};
+
+void setup() 
+{ 
+  Serial.begin(9600);
+
+  main1.attach(3); 
+  main2.attach(5); 
+  main3.attach(6);  
+  main4.attach(9);  
+  main5.attach(10);
+  main6.attach(11);
+} 
+ 
+void loop() 
+{ 
+if (Serial.available()==4)
+  {
+  pos=((Serial.read()-48)*100);
+  pos=pos+((Serial.read()-48)*10);
+  pos=pos+((Serial.read()-48));
+  motor=(Serial.read()-48);
+ Serial.print("The value for : (");
+ Serial.print(motor);
+ Serial.print(") is :");
+ Serial.print(pos);
+ Serial.println();
+
+  }
+if (Serial.available()==3)
+  {
+  pos=((Serial.read()-48)*10);
+  pos=pos+((Serial.read()-48));
+  motor=(Serial.read()-48);
+  Serial.print("The value for : (");
+ Serial.print(motor);
+ Serial.print(") is :");
+ Serial.print(pos);
+ Serial.println();
+  }
+
+if (Serial.available()==2)
+  {
+  pos=((Serial.read()-48));
+  motor=(Serial.read()-48);
+  Serial.print("The value for : (");
+ Serial.print(motor);
+ Serial.print(") is :");
+ Serial.print(pos);
+ Serial.println();
+  }
+
+if (Serial.available()==1 && Serial.read()=='o')
+{
+	Serial.println("The arm is shutting down");
+  servoControll(1,base_pos_1);
+  servoControll(2,base_pos_2);
+  servoControll(3,base_pos_3);
+  servoControll(4,base_pos_4);
+  servoControll(5,base_pos_5);
+  servoControll(6,base_pos_6);
+}
+if ( Serial.read()=='d')
+{
+	Serial.println("The servos are dettaching...");
+  main1.detach();
+  main2.detach();
+  main3.detach();
+  main4.detach();
+  main5.detach();
+  main6.detach();
+}
+if (Serial.available()==1 && Serial.read()=='a')
+{
+	Serial.println("The servos are attaching...");
+  main1.attach(3); 
+  main2.attach(5); 
+  main3.attach(6);  
+  main4.attach(9);  
+  main5.attach(10);
+  main6.attach(11);
+}
+
+delay(30);
+
+if(motor<1 || motor>6){Serial.println("Wrong motor number; it must be between (0-6)");motor=1;}
+else 
+{
+	switch(motor)
+	{
+	case 1: {if(main1r.getRangeError(pos)==0){servoControll(motor,pos);};break;}
+	case 2: {if(main2_3r.getRangeError(pos)==0){main2.write(pos);main3.write(180-pos);};break;}
+	//case 3: /*{if(main3r.getRangeError(pos)==0){servoControll(motor,pos);};break;}*/{break;}
+	case 4: {if(main4r.getRangeError(pos)==0){main4.attach(9); servoControll(motor,pos);main4.detach();};break;}
+	case 5: {if(main5r.getRangeError(pos)==0){servoControll(motor,pos);};break;}
+	case 6: {if(main6r.getRangeError(pos)==0){servoControll(motor,pos);};break;}
+	};
+}
+} 
